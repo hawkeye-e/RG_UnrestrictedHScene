@@ -1,0 +1,270 @@
+            #region DebugUsed
+
+            [HarmonyPrefix]
+            [HarmonyPatch(typeof(HScene), nameof(HScene.Update))]
+            private static void Update(HScene __instance)
+            {
+                int targetID = 909;
+                string targetName = "p_rg_23_isu00_01";
+                bool isHPoint = true;
+
+                float x = 0f;
+                float z = 0f;
+                float y = 0f;
+
+                if (Input.GetKeyDown(KeyCode.I))
+                {
+                    x = 0.1f;
+
+                }
+
+                if (Input.GetKeyDown(KeyCode.K))
+                {
+                    x = -0.1f;
+                }
+
+                if (Input.GetKeyDown(KeyCode.M))
+                {
+                    z = 0.1f;
+                }
+
+                if (Input.GetKeyDown(KeyCode.N))
+                {
+                    z = -0.1f;
+                }
+
+                if (Input.GetKeyDown(KeyCode.O))
+                {
+                    y = 0.1f;
+                }
+
+                if (Input.GetKeyDown(KeyCode.L))
+                {
+                    y = -0.1f;
+                }
+
+                if (x != 0f || z != 0f || y != 0f)
+                {
+                    var target = FindTarget(__instance, targetID);
+
+                    if (isHPoint)
+                    {
+                        var targetTranform = target.transform;
+                        targetTranform.position = new Vector3(targetTranform.position.x + x, targetTranform.position.y + y, targetTranform.position.z + z);
+                    }
+                    else
+                    {
+                        foreach (var m in target._moveObjects)
+                        {
+                            if (m.MoveObjName == targetName)
+                            {
+                                m.OffSetInfos[0].Pos = new Vector3(m.OffSetInfos[0].Pos.x + x, m.OffSetInfos[0].Pos.y + y, m.OffSetInfos[0].Pos.z + z);
+                            }
+                        }
+                    }
+                }
+            }
+
+            private static HPoint FindTarget(HScene __instance, int targetID)
+            {
+                var ctrl = __instance.HPointCtrl;
+
+                foreach (var kvp in ctrl._hPointList.Lst)
+                {
+                    foreach (var pt in kvp.Value.HPoints)
+                    {
+                        if (pt.ID == targetID)
+                            return pt;
+                    }
+                }
+
+                return null;
+            }
+
+            [HarmonyPostfix]
+            [HarmonyPatch(typeof(HSceneSprite), nameof(HSceneSprite.OnClickConfig))]
+            private static void OnClickConfig(HSceneSprite __instance)
+            {
+                //PrintTransformTreeUpward(__instance._hScene._chaFemalesTrans[0]);
+                //PrintTransformTree(__instance._hScene._chaFemalesTrans[0].parent);
+                var obj = GameObject.Find("MapObjectGroup");
+
+                if (obj != null)
+                {
+                    //PrintDetail(obj);
+                    int ccount = obj.transform.GetChildCount();
+                    for (int i = 0; i < ccount; i++)
+                    {
+                        var c = obj.transform.GetChild(i);
+                        Log.LogInfo("MapObjectGroup child name: " + c.name + ", position: " + c.transform.position + ", rotation: " + c.transform.rotation);
+                    }
+                    //foreach(var a in obj.transform.GetChild())
+
+                    //PrintTransformTreeUpward(obj.transform);
+
+                    //PrintTransformTree(obj.transform.parent.parent);
+                }
+
+                //var objFullMap = GameObject.Find("Map");
+
+                //if (objFullMap != null)
+                //{
+                //    PrintTransformTree(objFullMap.transform);
+                //}
+
+
+
+                foreach (var kvp in Manager.HSceneManager.Instance.Hscene.HPointCtrl.HPointList.Lst)
+                {
+                    Log.LogInfo("kvp.Key: " + kvp.Key + ", HPoints count: " + kvp.Value.HPoints.Count);
+                    foreach (var hp in kvp.Value.HPoints)
+                    {
+                        Log.LogInfo("hp id: " + hp.ID + ", name: " + hp.name + ", MarkerPos: " + hp.MarkerPos?.position + ", transform pos: " + hp.transform.position);
+
+                        if (hp._moveObjects != null)
+                        {
+                            Log.LogInfo("_moveObjects: " + hp._moveObjects.Count);
+
+                            foreach (var c in hp._moveObjects)
+                            {
+                                //PrintDetail(c);
+                                Log.LogInfo("offset: " + c.OffSetInfos[0].Pos + ", angle: " + c.OffSetInfos[0].Ang);
+                            }
+
+                        }
+                        if (hp._hideObj != null)
+                        {
+                            Log.LogInfo("_hideObj: " + hp._hideObj.Count);
+                            foreach (var c in hp._hideObj)
+                                Log.LogInfo("_hideObj: " + c.name);
+                        }
+                    }
+                }
+            }
+
+
+            public static void PrintDetail(object a)
+            {
+                if (a == null) return;
+
+                foreach (var prop in a.GetType().GetProperties())
+                {
+                    try
+                    {
+
+                        object value = prop.GetValue(a, null);
+                        if (value != null)
+                        {
+                            if (value is Transform)
+                                Log.Log(LogLevel.Info, prop.Name + "=" + value + ", name: " + ((Transform)value).name + ", active: " + ((Transform)value).gameObject.active);
+                            else if (value is GameObject)
+                                Log.Log(LogLevel.Info, prop.Name + "=" + value + ", name: " + ((GameObject)value).name + ", active: " + ((GameObject)value).active);
+                            else
+                                Log.Log(LogLevel.Info, prop.Name + "=" + value);
+                        }
+                        else
+                            Log.Log(LogLevel.Info, prop.Name + " is null!!");
+
+                    }
+                    catch { }
+                }
+                Log.LogInfo("================");
+            }
+
+            internal static void PrintTransformTree(Transform t, string currentPath = "")
+            {
+                if (t != null)
+                {
+                    Log.LogInfo("Path: " + currentPath);
+                    Log.LogInfo("Name: " + t.name);
+                    Log.LogInfo("Active: " + t.gameObject.active);
+                    //PrintDetail(t.gameObject);
+                    //PrintDetail(t);
+                    GetComponentTypes(t);
+
+                    var mono = t.GetComponent<MonoBehaviour>();
+                    if (mono != null)
+                    {
+                        Log.LogInfo("GetScriptClassName: " + mono.GetScriptClassName());
+                    }
+                    var text = t.GetComponent<Text>();
+                    if (text != null)
+                    {
+                        Log.LogInfo("Text: " + text.text);
+                    }
+
+                    Log.LogInfo("Position: " + t.position);
+                    Log.LogInfo("LocalPosition: " + t.localPosition);
+                    ////Log.LogInfo("Rotation: " + t.rotation.eulerAngles);
+                    ////Log.LogInfo("LocalRotation: " + t.localRotation.eulerAngles);
+                    ////var r = t.GetComponent<RectTransform>();
+                    ////if (r != null)
+                    ////{
+                    ////    Log.LogInfo("Width: " + r.rect.width + ", height: " + r.rect.height);
+                    ////    Log.LogInfo("bottom: " + r.rect.bottom + ", top: " + r.rect.top);
+                    ////}
+                    Log.LogInfo("Child Count: " + t.childCount);
+                    if (t.parent != null)
+                        Log.LogInfo("Parent: " + t.parent.name);
+
+                    Log.LogInfo("");
+                    for (int i = 0; i < t.GetChildCount(); i++)
+                    {
+                        Log.LogInfo("Visiting the child of [" + t.name + "]");
+                        PrintTransformTree(t.GetChild(i), currentPath + ".[" + t.name + "]");
+                    }
+                    Log.LogInfo("");
+                }
+            }
+
+            private static void GetComponentTypes(Transform t)
+            {
+                var c1 = t.GetComponent<Renderer>(); if (c1 != null) Log.LogInfo("has Renderer");
+                var c2 = t.GetComponent<MeshFilter>(); if (c2 != null) Log.LogInfo("has MeshFilter");
+                var c3 = t.GetComponent<LODGroup>(); if (c3 != null) Log.LogInfo("has LODGroup");
+                var c4 = t.GetComponent<Behaviour>(); if (c4 != null) Log.LogInfo("has Behaviour");
+
+                var c5 = t.GetComponent<Transform>(); if (c5 != null) Log.LogInfo("has Transform");
+                var c6 = t.GetComponent<CanvasRenderer>(); if (c6 != null) Log.LogInfo("has CanvasRenderer");
+                var c7 = t.GetComponent<Component>(); if (c7 != null) Log.LogInfo("has Component");
+                var c8 = t.GetComponent<RectTransform>(); if (c8 != null) Log.LogInfo("has RectTransform");
+
+                var c9 = t.GetComponent<BillboardRenderer>(); if (c9 != null) Log.LogInfo("has BillboardRenderer");
+                var c10 = t.GetComponent<LineRenderer>(); if (c10 != null) Log.LogInfo("has LineRenderer");
+                var c11 = t.GetComponent<SkinnedMeshRenderer>(); if (c11 != null) Log.LogInfo("has SkinnedMeshRenderer");
+                var c12 = t.GetComponent<MeshRenderer>(); if (c12 != null) Log.LogInfo("has MeshRenderer");
+                var c13 = t.GetComponent<SpriteRenderer>(); if (c13 != null) Log.LogInfo("has SpriteRenderer");
+
+                var c15 = t.GetComponent<MonoBehaviour>(); if (c15 != null) Log.LogInfo("has MonoBehaviour");
+
+                var c17 = t.GetComponent<VerticalLayoutGroup>(); if (c17 != null) Log.LogInfo("has VerticalLayoutGroup");
+                var c18 = t.GetComponent<HorizontalLayoutGroup>(); if (c18 != null) Log.LogInfo("has HorizontalLayoutGroup");
+                var c19 = t.GetComponent<LayoutGroup>(); if (c19 != null) Log.LogInfo("has LayoutGroup");
+                var c20 = t.GetComponent<GridLayoutGroup>(); if (c20 != null) Log.LogInfo("has GridLayoutGroup");
+                var c21 = t.GetComponent<ContentSizeFitter>(); if (c21 != null) Log.LogInfo("has ContentSizeFitter");
+                var c22 = t.GetComponent<Canvas>(); if (c22 != null) Log.LogInfo("has Canvas");
+                var c23 = t.GetComponent<ContentSizeFitter>(); if (c23 != null) Log.LogInfo("has ContentSizeFitter");
+
+                var c24 = t.GetComponent<Toggle>(); if (c24 != null) Log.LogInfo("has Toggle");
+                var c25 = t.GetComponent<UI_ToggleEx>(); if (c25 != null) Log.LogInfo("has UI_ToggleEx");
+                var c26 = t.GetComponent<UI_ToggleOnOffEx>(); if (c26 != null) Log.LogInfo("has UI_ToggleOnOffEx");
+                var c27 = t.GetComponent<Selectable>(); if (c27 != null) Log.LogInfo("has Selectable");
+            }
+
+            internal static void PrintTransformTreeUpward(Transform t, string currentPath = "", string stopAt = null)
+            {
+                Log.LogInfo("Name: " + t.name + ", active: " + t.gameObject.active);
+                GetComponentTypes(t);
+                var mono = t.GetComponent<MonoBehaviour>();
+                if (mono != null)
+                {
+                    Log.LogInfo("GetScriptClassName: " + mono.GetScriptClassName());
+                }
+
+                if (t.parent != null && (stopAt == null || t.name != stopAt))
+                {
+                    Log.LogInfo("Visiting the parent of [" + t.name + "]" + ", position: " + t.position);
+                    PrintTransformTreeUpward(t.parent, "[" + t.name + "]." + currentPath);
+                }
+            }
+            #endregion DebugUsed
