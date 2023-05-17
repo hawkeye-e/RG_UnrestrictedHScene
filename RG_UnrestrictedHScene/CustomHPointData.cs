@@ -428,6 +428,7 @@ namespace UnrestrictedHScene
             internal List<HPointData.MoveObjectInfo> moveObjects;
             internal bool isWet = false;
             internal int motionChairID = -1;
+            internal bool isSpecialHPoint = true;
 
             internal HPointData(int hPointID, int hPointGroup, string hPointName, Vector3 position, float rotation, Vector3 markerPosition)
             {

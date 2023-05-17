@@ -80,7 +80,8 @@ namespace UnrestrictedHScene
                     Dictionary<int, HPointList.PlaceInfo> lstAddPlaceInfo = new Dictionary<int, HPointList.PlaceInfo>();
 
                     //special point should exists in all maps and with marker position object. we clone that and add our own custom HPoint.
-                    HPoint toClone = __instance.Lst[9].HPoints[0];
+                    HPoint toCloneSpecial = __instance.Lst[9].HPoints[0];
+                    HPoint toCloneCommon = __instance.Lst[0].HPoints[0];
 
                     System.Collections.Generic.List<CustomHPointData.HPointData> lstToAddPoint = CustomHPointData.HPointList[Manager.HSceneManager.Instance.MapID];
                     foreach (var pointData in lstToAddPoint)
@@ -91,7 +92,8 @@ namespace UnrestrictedHScene
                             HPointList.HPointPlaceInfo info = new HPointList.HPointPlaceInfo();
                             info.HPoints = new List<HPoint>();
                             info.MarkerETC = true;
-                            __instance.Lst.Add(pointData.hPointGroup, info);
+                            if(!__instance.Lst.ContainsKey(pointData.hPointGroup))
+                                __instance.Lst.Add(pointData.hPointGroup, info);
 
                             GameObject hPointParent = Object.Instantiate(__instance._hpointGroup[0].HPoints);
                             hPointParent.name = CustomHPointData.GetHPointParentNameByGroupType(pointData.hPointGroup);
@@ -106,7 +108,11 @@ namespace UnrestrictedHScene
                         }
 
                         //handle the point data
-                        HPoint hp = Object.Instantiate(toClone);
+                        HPoint hp;
+                        if(pointData.isSpecialHPoint)
+                            hp = Object.Instantiate(toCloneSpecial);
+                        else
+                            hp = Object.Instantiate(toCloneCommon);
 
                         hp.ID = pointData.hPointID;
                         hp.name = pointData.hPointName;
