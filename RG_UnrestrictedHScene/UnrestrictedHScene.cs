@@ -17,7 +17,7 @@ namespace UnrestrictedHScene
     {
         public const string PluginName = "UnrestrictedHScene";
         public const string GUID = "hawk.RG.UnrestrictedHScene";
-        public const string Version = "0.1.0";
+        public const string Version = "0.1.1";
 
         internal static new ManualLogSource Log;
 
